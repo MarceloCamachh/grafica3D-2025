@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using OpenTK.Graphics;
 using OpenTK;
+using Newtonsoft.Json;
 
 namespace progGrafica1
 {
@@ -20,6 +21,14 @@ namespace progGrafica1
             this.centro = centro;
         }
 
+        public string SerializeToJson()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
+        public static Objeto DeserializeFromJson(string json)
+        {
+            return JsonConvert.DeserializeObject<Objeto>(json);
+        }
         public void AddParte(string nombre, Parte nuevaParte)
         {
             listaDePartes.Add(nombre, nuevaParte);

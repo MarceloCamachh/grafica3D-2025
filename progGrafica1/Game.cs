@@ -7,6 +7,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
+using Newtonsoft.Json;
 
 
 namespace progGrafica1
@@ -28,9 +29,9 @@ namespace progGrafica1
             GL.CullFace(CullFaceMode.Back);
             //GL.Enable(EnableCap.Lighting);
             GL.Enable(EnableCap.Light0);
-            // 1. Creo el Objeto dinámico (la computadora)
+
+            /*
             computadora = new Objeto(new Dictionary<string, Parte>(), Vector3.Zero);
-            // Monitor (cubo ancho=1, alto=0.8, profundo=0.1)
             Parte monitor = CrearCubo(Color4.Gray, 1.0f, 0.8f, 0.1f, new Vector3(0f, 0.3f, 0f));
             computadora.AddParte("Monitor", monitor);
 
@@ -53,11 +54,11 @@ namespace progGrafica1
                 float offset = -0.55f + i * 0.12f; // separación entre teclas
                 Parte tecla = CrearCubo(Color4.White, 0.1f, 0.05f, 0.1f, new Vector3(offset, -0.58f, 0f));
                 computadora.AddParte($"Tecla{i}", tecla);
-            }
-
+            }*/
+            //Serializador.SerializarObjeto(computadora,"computadora.json");
+            computadora = Serializador.DeserializarObjeto<Objeto>("computadora.json");
 
         }
-
         protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
