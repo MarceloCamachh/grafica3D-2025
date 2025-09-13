@@ -57,6 +57,8 @@ namespace progGrafica1
             }*/
             //Serializador.SerializarObjeto(computadora,"computadora.json");
             computadora = Serializador.DeserializarObjeto<Objeto>("computadora.json");
+            if (computadora != null)
+                computadora.SetCentro(computadora.CalcularCentroMasa());
 
         }
         protected override void OnResize(EventArgs e)
@@ -105,6 +107,36 @@ namespace progGrafica1
             GL.Vertex3(0.0f, 0.0f, 2.0f);
 
             GL.End();
+        }
+        protected override void OnUpdateFrame(FrameEventArgs e)
+        {
+            base.OnUpdateFrame(e);
+
+            var kb = Keyboard.GetState();
+            float dt = (float)e.Time;
+            float v = 1.0f;      // velocidad de traslación
+            float r = 60.0f;     // vel. de rotación (°/s)
+            float s = 1.5f;      // factor de escala incremental
+
+            // Traslación (WASD + Q/E para Z)
+            if (kb.IsKeyDown(Key.W)) computadora.Trasladar(0, v * dt, 0);
+            if (kb.IsKeyDown(Key.S)) computadora.Trasladar(0, -v * dt, 0);
+            if (kb.IsKeyDown(Key.A)) computadora.Trasladar(-v * dt, 0, 0);
+            if (kb.IsKeyDown(Key.D)) computadora.Trasladar(v * dt, 0, 0);
+            if (kb.IsKeyDown(Key.Q)) computadora.Trasladar(0, 0, v * dt);
+            if (kb.IsKeyDown(Key.E)) computadora.Trasladar(0, 0, -v * dt);
+
+            // Rotación con flechas + PgUp/PgDn
+            if (kb.IsKeyDown(Key.Up)) computadora.Rotar(-r * dt, 0, 0);
+            if (kb.IsKeyDown(Key.Down)) computadora.Rotar(r * dt, 0, 0);
+            if (kb.IsKeyDown(Key.Left)) computadora.Rotar(0, -r * dt, 0);
+            if (kb.IsKeyDown(Key.Right)) computadora.Rotar(0, r * dt, 0);
+            if (kb.IsKeyDown(Key.PageUp)) computadora.Rotar(0, 0, r * dt);
+            if (kb.IsKeyDown(Key.PageDown)) computadora.Rotar(0, 0, -r * dt);
+
+            // Escala (Z para crecer, X para reducir)
+            if (kb.IsKeyDown(Key.Z)) computadora.EscalarAcum(1 + (s - 1) * dt, 1 + (s - 1) * dt, 1 + (s - 1) * dt);
+            if (kb.IsKeyDown(Key.X)) computadora.EscalarAcum(1 - (s - 1) * dt, 1 - (s - 1) * dt, 1 - (s - 1) * dt);
         }
         Parte CrearCubo(Color4 color, float ancho, float alto, float profundo, Vector3 centro)
         {

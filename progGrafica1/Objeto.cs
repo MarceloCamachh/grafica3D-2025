@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using OpenTK.Graphics;
 using OpenTK;
 using Newtonsoft.Json;
+using OpenTK.Graphics.OpenGL;
 
 namespace progGrafica1
 {
@@ -15,20 +16,16 @@ namespace progGrafica1
         private Vector3 centro;
         public Color4 color;
 
+        public Vector3 Traslacion = Vector3.Zero;
+        public Vector3 RotacionEuler = Vector3.Zero; // en grados (X,Y,Z)
+        public Vector3 Escala = Vector3.One;
+
         public Objeto(Dictionary<string, Parte> list, Vector3 centro)
         {
             this.listaDePartes = list;
             this.centro = centro;
         }
 
-        public string SerializeToJson()
-        {
-            return JsonConvert.SerializeObject(this);
-        }
-        public static Objeto DeserializeFromJson(string json)
-        {
-            return JsonConvert.DeserializeObject<Objeto>(json);
-        }
         public void AddParte(string nombre, Parte nuevaParte)
         {
             listaDePartes.Add(nombre, nuevaParte);
@@ -58,13 +55,27 @@ namespace progGrafica1
         {
             return this.listaDePartes[nombre];
         }
+        public void Trasladar(float dx, float dy, float dz) => Traslacion += new Vector3(dx, dy, dz);
+        public void Rotar(float gx, float gy, float gz) => RotacionEuler += new Vector3(gx, gy, gz);
+        public void EscalarAcum(float sx, float sy, float sz) => Escala *= new Vector3(sx, sy, sz); // multiplicativa
 
         public void Draw()
         {
+            GL.PushMatrix();    
+            GL.Translate(Traslacion);
+            GL.Translate(centro);
+
+            if (RotacionEuler.X != 0) GL.Rotate(RotacionEuler.X, 1, 0, 0);
+            if (RotacionEuler.Y != 0) GL.Rotate(RotacionEuler.Y, 0, 1, 0);
+            if (RotacionEuler.Z != 0) GL.Rotate(RotacionEuler.Z, 0, 0, 1);
+
+            GL.Scale(Escala);
+            GL.Translate(-centro);
             foreach (var parte in this.listaDePartes.Values)
             {
                 parte.Draw();
             }
+            GL.PopMatrix();
         }
 
         public Vector3 CalcularCentroMasa()
