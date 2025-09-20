@@ -41,7 +41,33 @@ namespace progGrafica1
             this.listaDeVertices.Add(v);
             this.centro = CalcularCentroMasa();
         }
+        public void Trasladar(float dx, float dy, float dz)
+        {
+            Vector3 delta = new Vector3(dx, dy, dz);
+            for (int i = 0; i < listaDeVertices.Count; i++)
+                listaDeVertices[i] += delta;
 
+            centro += delta;
+        }
+        public void Escalar(float sx, float sy, float sz)
+        {
+            for (int i = 0; i < listaDeVertices.Count; i++)
+            {
+                Vector3 relativo = listaDeVertices[i] - centro;
+                relativo *= new Vector3(sx, sy, sz);
+                listaDeVertices[i] = centro + relativo;
+            }
+        }
+        public void Rotar(float grados, Vector3 eje)
+        {
+            Matrix3 rot = Matrix3.CreateFromAxisAngle(Vector3.Normalize(eje), MathHelper.DegreesToRadians(grados));
+            for (int i = 0; i < listaDeVertices.Count; i++)
+            {
+                Vector3 relativo = listaDeVertices[i] - centro;
+                relativo = Vector3.Transform(relativo, rot);
+                listaDeVertices[i] = centro + relativo;
+            }
+        }
         public void Draw()
         {
             

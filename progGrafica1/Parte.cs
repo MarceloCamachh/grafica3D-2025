@@ -22,12 +22,13 @@ namespace progGrafica1
 
         public void Add(string nombre, Poligono p)
         {
-            this.listaDePoligonos.Add(nombre, p);
+            if (!listaDePoligonos.ContainsKey(nombre))
+                listaDePoligonos.Add(nombre, p);
         }
 
         public Poligono GetPoligono(string nombre)
         {
-            return this.listaDePoligonos[nombre];
+            return listaDePoligonos.ContainsKey(nombre) ? listaDePoligonos[nombre] : null;
         }
 
         public Vector3 GetCentro()
@@ -75,9 +76,22 @@ namespace progGrafica1
             }
         }
 
+        public void Trasladar(float dx, float dy, float dz)
+        {
+            foreach (var poligono in listaDePoligonos.Values)
+                poligono.Trasladar(dx, dy, dz);
+        }
+
+        public void Escalar(float sx, float sy, float sz)
+        {
+            foreach (var poligono in listaDePoligonos.Values)
+                poligono.Escalar(sx, sy, sz);
+        }
+
         public void Rotar(float grados, Vector3 eje)
         {
-            throw new NotImplementedException("Rotación no implementada en Parte.");
+            foreach (var poligono in listaDePoligonos.Values)
+                poligono.Rotar(grados, eje);
         }
     }
 }

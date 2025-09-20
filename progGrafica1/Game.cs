@@ -14,7 +14,20 @@ namespace progGrafica1
 {
     public class Game : GameWindow
     {
+        private Escenario escenario;
         private Objeto computadora;
+
+        private ModoSeleccion modoSeleccion = ModoSeleccion.Escenario;
+
+        private Objeto objetoActivo;
+        private Parte parteActiva;
+        private Poligono poligonoActivo;
+
+        private List<string> objetosKeys;
+        private int objetoIndex = 0;
+
+        private List<string> partesKeys;
+        private int parteIndex = 0;
         public Game(int width, int height)
             : base(width, height, GraphicsMode.Default, "ProgGrafica 2-2025")
         {
@@ -56,9 +69,15 @@ namespace progGrafica1
                 computadora.AddParte($"Tecla{i}", tecla);
             }*/
             //Serializador.SerializarObjeto(computadora,"computadora.json");
-            computadora = Serializador.DeserializarObjeto<Objeto>("computadora.json");
+            escenario = new Escenario();
+
+            Objeto computadora = Serializador.DeserializarObjeto<Objeto>("computadora.json");
             if (computadora != null)
                 computadora.SetCentro(computadora.CalcularCentroMasa());
+            escenario.AddObjeto("Computadora", computadora);
+
+            objetosKeys = escenario.GetObjetos().Select((o, idx) => $"Computadora").ToList();
+            objetoActivo = escenario.GetObjeto("Computadora");
 
         }
         protected override void OnResize(EventArgs e)
@@ -85,7 +104,7 @@ namespace progGrafica1
                 Vector3.UnitY);
             GL.LoadMatrix(ref modelview);
 
-            computadora.Draw();
+            escenario.Draw();
 
             DibujarEjes();
             SwapBuffers();
@@ -114,30 +133,113 @@ namespace progGrafica1
 
             var kb = Keyboard.GetState();
             float dt = (float)e.Time;
-            float v = 1.0f;      // velocidad de traslación
-            float r = 60.0f;     // vel. de rotación (°/s)
-            float s = 1.5f;      // factor de escala incremental
+            float v = 1.0f;   // velocidad de traslación
+            float r = 60.0f;  // velocidad de rotación (grados/seg)
+            float s = 1.5f;   // factor de escala incremental
 
-            // Traslación (WASD + Q/E para Z)
-            if (kb.IsKeyDown(Key.W)) computadora.Trasladar(0, v * dt, 0);
-            if (kb.IsKeyDown(Key.S)) computadora.Trasladar(0, -v * dt, 0);
-            if (kb.IsKeyDown(Key.A)) computadora.Trasladar(-v * dt, 0, 0);
-            if (kb.IsKeyDown(Key.D)) computadora.Trasladar(v * dt, 0, 0);
-            if (kb.IsKeyDown(Key.Q)) computadora.Trasladar(0, 0, v * dt);
-            if (kb.IsKeyDown(Key.E)) computadora.Trasladar(0, 0, -v * dt);
+            // --- Alternar modo de selección (Tab) ---
+            if (kb.IsKeyDown(Key.Tab))
+            {
+                modoSeleccion = (ModoSeleccion)(((int)modoSeleccion + 1) % Enum.GetNames(typeof(ModoSeleccion)).Length);
+                Console.WriteLine($"[Modo de selección]: {modoSeleccion}");
+                System.Threading.Thread.Sleep(200); // debounce
+            }
 
-            // Rotación con flechas + PgUp/PgDn
-            if (kb.IsKeyDown(Key.Up)) computadora.Rotar(-r * dt, 0, 0);
-            if (kb.IsKeyDown(Key.Down)) computadora.Rotar(r * dt, 0, 0);
-            if (kb.IsKeyDown(Key.Left)) computadora.Rotar(0, -r * dt, 0);
-            if (kb.IsKeyDown(Key.Right)) computadora.Rotar(0, r * dt, 0);
-            if (kb.IsKeyDown(Key.PageUp)) computadora.Rotar(0, 0, r * dt);
-            if (kb.IsKeyDown(Key.PageDown)) computadora.Rotar(0, 0, -r * dt);
+            // --- Cambiar objeto/parte activa (Enter) ---
+            if (kb.IsKeyDown(Key.Enter))
+            {
+                if (modoSeleccion == ModoSeleccion.Objeto)
+                {
+                    objetosKeys = escenario.GetObjetos().Select((o) => "Computadora").ToList();
+                    if (objetosKeys.Count > 0)
+                    {
+                        objetoIndex = (objetoIndex + 1) % objetosKeys.Count;
+                        objetoActivo = escenario.GetObjeto(objetosKeys[objetoIndex]);
+                        Console.WriteLine($"[Objeto activo]: {objetosKeys[objetoIndex]}");
+                    }
+                }
+                else if (modoSeleccion == ModoSeleccion.Parte && objetoActivo != null)
+                {
+                    partesKeys = objetoActivo.listaDePartes.Keys.ToList();
+                    if (partesKeys.Count > 0)
+                    {
+                        parteIndex = (parteIndex + 1) % partesKeys.Count;
+                        parteActiva = objetoActivo.GetParte(partesKeys[parteIndex]);
+                        Console.WriteLine($"[Parte activa]: {partesKeys[parteIndex]}");
+                    }
+                }
+                System.Threading.Thread.Sleep(200); // debounce
+            }
 
-            // Escala (Z para crecer, X para reducir)
-            if (kb.IsKeyDown(Key.Z)) computadora.EscalarAcum(1 + (s - 1) * dt, 1 + (s - 1) * dt, 1 + (s - 1) * dt);
-            if (kb.IsKeyDown(Key.X)) computadora.EscalarAcum(1 - (s - 1) * dt, 1 - (s - 1) * dt, 1 - (s - 1) * dt);
+            // --- Transformaciones según el nivel seleccionado ---
+            // Traslación (WASD + Q/E)
+            if (kb.IsKeyDown(Key.W)) AplicarTraslacion(0, v * dt, 0);
+            if (kb.IsKeyDown(Key.S)) AplicarTraslacion(0, -v * dt, 0);
+            if (kb.IsKeyDown(Key.A)) AplicarTraslacion(-v * dt, 0, 0);
+            if (kb.IsKeyDown(Key.D)) AplicarTraslacion(v * dt, 0, 0);
+            if (kb.IsKeyDown(Key.Q)) AplicarTraslacion(0, 0, v * dt);
+            if (kb.IsKeyDown(Key.E)) AplicarTraslacion(0, 0, -v * dt);
+
+            // Rotación (Flechas + PgUp/PgDn)
+            if (kb.IsKeyDown(Key.Up)) AplicarRotacion(-r * dt, Vector3.UnitX);
+            if (kb.IsKeyDown(Key.Down)) AplicarRotacion(r * dt, Vector3.UnitX);
+            if (kb.IsKeyDown(Key.Left)) AplicarRotacion(-r * dt, Vector3.UnitY);
+            if (kb.IsKeyDown(Key.Right)) AplicarRotacion(r * dt, Vector3.UnitY);
+            if (kb.IsKeyDown(Key.N)) AplicarRotacion(r * dt, Vector3.UnitZ);
+            if (kb.IsKeyDown(Key.M)) AplicarRotacion(-r * dt, Vector3.UnitZ);
+
+            // Escalado (Z / X)
+            if (kb.IsKeyDown(Key.Z)) AplicarEscala(1 + (s - 1) * dt, 1 + (s - 1) * dt, 1 + (s - 1) * dt);
+            if (kb.IsKeyDown(Key.X)) AplicarEscala(1 - (s - 1) * dt, 1 - (s - 1) * dt, 1 - (s - 1) * dt);
         }
+        private void AplicarTraslacion(float dx, float dy, float dz)
+        {
+            switch (modoSeleccion)
+            {
+                case ModoSeleccion.Escenario:
+                    escenario.Trasladar(dx, dy, dz);
+                    break;
+                case ModoSeleccion.Objeto:
+                    objetoActivo?.Trasladar(dx, dy, dz);
+                    break;
+                case ModoSeleccion.Parte:
+                    parteActiva?.Trasladar(dx, dy, dz);
+                    break;
+            }
+        }
+
+        private void AplicarRotacion(float grados, Vector3 eje)
+        {
+            switch (modoSeleccion)
+            {
+                case ModoSeleccion.Escenario:
+                    escenario.Rotar(grados, eje);
+                    break;
+                case ModoSeleccion.Objeto:
+                    objetoActivo?.Rotar(grados, eje);
+                    break;
+                case ModoSeleccion.Parte:
+                    parteActiva?.Rotar(grados, eje);
+                    break;
+            }
+        }
+
+        private void AplicarEscala(float sx, float sy, float sz)
+        {
+            switch (modoSeleccion)
+            {
+                case ModoSeleccion.Escenario:
+                    escenario.Escalar(sx, sy, sz);
+                    break;
+                case ModoSeleccion.Objeto:
+                    objetoActivo?.Escalar(sx, sy, sz);
+                    break;
+                case ModoSeleccion.Parte:
+                    parteActiva?.Escalar(sx, sy, sz);
+                    break;
+            }
+        }
+
         Parte CrearCubo(Color4 color, float ancho, float alto, float profundo, Vector3 centro)
         {
             Parte cubo = new Parte();
@@ -197,5 +299,12 @@ namespace progGrafica1
             return cubo;
         }
 
+    }
+    public enum ModoSeleccion
+    {
+        Escenario,
+        Objeto,
+        Parte,
+        Poligono
     }
 }

@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using OpenTK.Graphics;
 using OpenTK;
 using Newtonsoft.Json;
-using OpenTK.Graphics.OpenGL;
 
 namespace progGrafica1
 {
@@ -28,7 +27,8 @@ namespace progGrafica1
 
         public void AddParte(string nombre, Parte nuevaParte)
         {
-            listaDePartes.Add(nombre, nuevaParte);
+            if (!listaDePartes.ContainsKey(nombre))
+                listaDePartes.Add(nombre, nuevaParte);
         }
 
         public Vector3 GetCentro()
@@ -53,29 +53,31 @@ namespace progGrafica1
 
         public Parte GetParte(string nombre)
         {
-            return this.listaDePartes[nombre];
+            return listaDePartes.ContainsKey(nombre) ? listaDePartes[nombre] : null;
         }
-        public void Trasladar(float dx, float dy, float dz) => Traslacion += new Vector3(dx, dy, dz);
-        public void Rotar(float gx, float gy, float gz) => RotacionEuler += new Vector3(gx, gy, gz);
-        public void EscalarAcum(float sx, float sy, float sz) => Escala *= new Vector3(sx, sy, sz); // multiplicativa
+        public void Trasladar(float dx, float dy, float dz)
+        {
+            foreach (var parte in listaDePartes.Values)
+                parte.Trasladar(dx, dy, dz);
+        }
 
+        public void Escalar(float sx, float sy, float sz)
+        {
+            foreach (var parte in listaDePartes.Values)
+                parte.Escalar(sx, sy, sz);
+        }
+
+        public void Rotar(float grados, Vector3 eje)
+        {
+            foreach (var parte in listaDePartes.Values)
+                parte.Rotar(grados, eje);
+        }
         public void Draw()
         {
-            GL.PushMatrix();    
-            GL.Translate(Traslacion);
-            GL.Translate(centro);
-
-            if (RotacionEuler.X != 0) GL.Rotate(RotacionEuler.X, 1, 0, 0);
-            if (RotacionEuler.Y != 0) GL.Rotate(RotacionEuler.Y, 0, 1, 0);
-            if (RotacionEuler.Z != 0) GL.Rotate(RotacionEuler.Z, 0, 0, 1);
-
-            GL.Scale(Escala);
-            GL.Translate(-centro);
             foreach (var parte in this.listaDePartes.Values)
             {
                 parte.Draw();
             }
-            GL.PopMatrix();
         }
 
         public Vector3 CalcularCentroMasa()
