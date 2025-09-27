@@ -39,10 +39,6 @@ namespace progGrafica1
         public void SetCentro(Vector3 centro)
         {
             this.centro = centro;
-            foreach (Parte parteActual in listaDePartes.Values)
-            {
-                parteActual.SetCentro(centro);
-            }
         }
 
         public void SetColor(string parte, string poligono, Color4 color)
@@ -55,23 +51,7 @@ namespace progGrafica1
         {
             return listaDePartes.ContainsKey(nombre) ? listaDePartes[nombre] : null;
         }
-        public void Trasladar(float dx, float dy, float dz)
-        {
-            foreach (var parte in listaDePartes.Values)
-                parte.Trasladar(dx, dy, dz);
-        }
-
-        public void Escalar(float sx, float sy, float sz)
-        {
-            foreach (var parte in listaDePartes.Values)
-                parte.Escalar(sx, sy, sz);
-        }
-
-        public void Rotar(float grados, Vector3 eje)
-        {
-            foreach (var parte in listaDePartes.Values)
-                parte.Rotar(grados, eje);
-        }
+        
         public void Draw()
         {
             foreach (var parte in this.listaDePartes.Values)
@@ -82,16 +62,42 @@ namespace progGrafica1
 
         public Vector3 CalcularCentroMasa()
         {
+            if (listaDePartes.Count == 0) return centro;
             Vector3 suma = Vector3.Zero;
+            int count = 0;
             foreach (var parte in listaDePartes.Values)
             {
                 suma += parte.CalcularCentroMasa();
+                count++;
             }
+            return count > 0 ? suma / count : centro;
+        }
 
-            if (listaDePartes.Count > 0)
-                suma /= listaDePartes.Count;
+        public void Rotar(float grados, Vector3 eje)
+        {
+            var pivote = CalcularCentroMasa();
+            foreach (var parte in listaDePartes.Values)
+            {
+                // Rotar cada polígono de la parte respecto al pivote del OBJETO
+                foreach (var p in parte.listaDePoligonos.Values)
+                    p.RotarSobre(grados, eje, pivote);
+            }
+        }
 
-            return suma;
+        public void Escalar(float sx, float sy, float sz)
+        {
+            var pivote = CalcularCentroMasa();
+            foreach (var parte in listaDePartes.Values)
+            {
+                foreach (var p in parte.listaDePoligonos.Values)
+                    p.EscalarSobre(sx, sy, sz, pivote);
+            }
+        }
+
+        public void Trasladar(float dx, float dy, float dz)
+        {
+            foreach (var parte in listaDePartes.Values)
+                parte.Trasladar(dx, dy, dz);
         }
     }
 }

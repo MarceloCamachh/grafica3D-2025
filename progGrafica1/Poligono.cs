@@ -60,7 +60,7 @@ namespace progGrafica1
         }
         public void Rotar(float grados, Vector3 eje)
         {
-            Matrix3 rot = Matrix3.CreateFromAxisAngle(Vector3.Normalize(eje), MathHelper.DegreesToRadians(grados));
+            Matrix3 rot = Matrix3.CreateFromAxisAngle(Vector3.Normalize(eje), MathHelper.DegreesToRadians(grados)); 
             for (int i = 0; i < listaDeVertices.Count; i++)
             {
                 Vector3 relativo = listaDeVertices[i] - centro;
@@ -115,6 +115,32 @@ namespace progGrafica1
                 (min.Y + max.Y) / 2f,
                 (min.Z + max.Z) / 2f
             );
+        }
+        public void RotarSobre(float grados, Vector3 eje, Vector3 pivote)
+        {
+            if (eje.LengthSquared == 0f) return;
+            eje.Normalize();
+            var rot = Matrix3.CreateFromAxisAngle(eje, MathHelper.DegreesToRadians(grados));
+            for (int i = 0; i < listaDeVertices.Count; i++)
+            {
+                var relativo = listaDeVertices[i] - pivote;
+                relativo = Vector3.Transform(relativo, rot);
+                listaDeVertices[i] = pivote + relativo;
+            }
+            // No cambio this.centro aquí; si quieres, puedes recalcularlo:
+            // this.centro = CalcularCentroMasa();
+        }
+
+        public void EscalarSobre(float sx, float sy, float sz, Vector3 pivote)
+        {
+            var s = new Vector3(sx, sy, sz);
+            for (int i = 0; i < listaDeVertices.Count; i++)
+            {
+                var relativo = listaDeVertices[i] - pivote;
+                relativo *= s;
+                listaDeVertices[i] = pivote + relativo;
+            }
+            // this.centro = CalcularCentroMasa(); // opcional
         }
     }
 }

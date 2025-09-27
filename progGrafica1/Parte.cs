@@ -39,10 +39,6 @@ namespace progGrafica1
         public void SetCentro(Vector3 centro)
         {
             this.centro = centro;
-            foreach (Poligono poligono in listaDePoligonos.Values)
-            {
-                poligono.SetCentro(centro);
-            }
         }
 
         public void SetColor(Color4 color)
@@ -56,16 +52,34 @@ namespace progGrafica1
 
         public Vector3 CalcularCentroMasa()
         {
+            // Promedio de centros de polígonos
+            if (listaDePoligonos.Count == 0) return centro;
             Vector3 suma = Vector3.Zero;
-            foreach (var poligono in listaDePoligonos.Values)
-            {
-                suma += poligono.CalcularCentroMasa();
-            }
+            foreach (var p in listaDePoligonos.Values)
+                suma += p.CalcularCentroMasa();
+            return suma / listaDePoligonos.Count;
+        }
 
-            if (listaDePoligonos.Count > 0)
-                suma /= listaDePoligonos.Count;
+        // ✅ Rotar/escala de la PARTE respecto a su propio centro:
+        public void Rotar(float grados, Vector3 eje)
+        {
+            var pivote = CalcularCentroMasa(); // o usa this.centro si lo mantienes actualizado
+            foreach (var p in listaDePoligonos.Values)
+                p.RotarSobre(grados, eje, pivote);
+        }
 
-            return suma;
+        public void Escalar(float sx, float sy, float sz)
+        {
+            var pivote = CalcularCentroMasa();
+            foreach (var p in listaDePoligonos.Values)
+                p.EscalarSobre(sx, sy, sz, pivote);
+        }
+
+        // Traslación no necesita pivote especial
+        public void Trasladar(float dx, float dy, float dz)
+        {
+            foreach (var p in listaDePoligonos.Values)
+                p.Trasladar(dx, dy, dz);
         }
 
         public void Draw()
@@ -75,23 +89,6 @@ namespace progGrafica1
                 poligono.Draw();
             }
         }
-
-        public void Trasladar(float dx, float dy, float dz)
-        {
-            foreach (var poligono in listaDePoligonos.Values)
-                poligono.Trasladar(dx, dy, dz);
-        }
-
-        public void Escalar(float sx, float sy, float sz)
-        {
-            foreach (var poligono in listaDePoligonos.Values)
-                poligono.Escalar(sx, sy, sz);
-        }
-
-        public void Rotar(float grados, Vector3 eje)
-        {
-            foreach (var poligono in listaDePoligonos.Values)
-                poligono.Rotar(grados, eje);
-        }
+   
     }
 }

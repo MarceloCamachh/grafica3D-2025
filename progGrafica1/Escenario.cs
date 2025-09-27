@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 
@@ -68,7 +69,15 @@ namespace progGrafica1
             foreach (var objeto in listaDeObjetos.Values)
                 objeto.Rotar(grados, eje);
         }
+        public IEnumerable<string> GetNombresObjetos()
+        {
+            return listaDeObjetos.Keys;
+        }
 
+        public string GetNombreObjeto(Objeto obj)
+        {
+            return listaDeObjetos.FirstOrDefault(x => x.Value == obj).Key;
+        }
         // --- Calcular el centro de masa global del escenario ---
         public Vector3 CalcularCentroMasa()
         {

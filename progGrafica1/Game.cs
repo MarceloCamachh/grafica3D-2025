@@ -71,13 +71,27 @@ namespace progGrafica1
             //Serializador.SerializarObjeto(computadora,"computadora.json");
             escenario = new Escenario();
 
-            Objeto computadora = Serializador.DeserializarObjeto<Objeto>("computadora.json");
-            if (computadora != null)
-                computadora.SetCentro(computadora.CalcularCentroMasa());
-            escenario.AddObjeto("Computadora", computadora);
+            Objeto computadora1 = Serializador.DeserializarObjeto<Objeto>("computadora.json");
+            if (computadora1 != null)
+            {
+                computadora1.SetCentro(computadora1.CalcularCentroMasa());
+                computadora1.Trasladar(-1.0f, 0, 0);
+                escenario.AddObjeto("Computadora1", computadora1);
+            }
 
-            objetosKeys = escenario.GetObjetos().Select((o, idx) => $"Computadora").ToList();
-            objetoActivo = escenario.GetObjeto("Computadora");
+            // --- Computadora 2 (misma, pero trasladada a la derecha) ---
+            Objeto computadora2 = Serializador.DeserializarObjeto<Objeto>("computadora.json");
+            if (computadora2 != null)
+            {
+                computadora2.SetCentro(computadora2.CalcularCentroMasa());
+                computadora2.Trasladar(1.0f, 0, 0);  // mover 3 unidades en X
+                escenario.AddObjeto("Computadora2", computadora2);
+            }
+
+            objetosKeys = escenario.GetObjetos().Select(o => escenario.GetNombreObjeto(o)).ToList();
+
+            // Seleccionamos por defecto la primera computadora
+            objetoActivo = escenario.GetObjeto(objetosKeys.First());
 
         }
         protected override void OnResize(EventArgs e)
@@ -148,15 +162,11 @@ namespace progGrafica1
             // --- Cambiar objeto/parte activa (Enter) ---
             if (kb.IsKeyDown(Key.Enter))
             {
-                if (modoSeleccion == ModoSeleccion.Objeto)
+                if (modoSeleccion == ModoSeleccion.Objeto && objetosKeys.Count > 0)
                 {
-                    objetosKeys = escenario.GetObjetos().Select((o) => "Computadora").ToList();
-                    if (objetosKeys.Count > 0)
-                    {
-                        objetoIndex = (objetoIndex + 1) % objetosKeys.Count;
-                        objetoActivo = escenario.GetObjeto(objetosKeys[objetoIndex]);
-                        Console.WriteLine($"[Objeto activo]: {objetosKeys[objetoIndex]}");
-                    }
+                    objetoIndex = (objetoIndex + 1) % objetosKeys.Count;
+                    objetoActivo = escenario.GetObjeto(objetosKeys[objetoIndex]);
+                    Console.WriteLine($"[Objeto activo]: {objetosKeys[objetoIndex]}");
                 }
                 else if (modoSeleccion == ModoSeleccion.Parte && objetoActivo != null)
                 {
